@@ -56,3 +56,39 @@ export function getBaseUnit(unit: string): string {
   if (!u) throw new Error(`Unknown unit: ${unit}`)
   return u.baseUnit
 }
+
+// Returns true when the recipe unit dimension differs from the ingredient's stored base unit dimension.
+export function needsCrossDimension(recipeUnit: string, ingredientBaseUnit: string): boolean {
+  const u = UNITS.find((u) => u.value === recipeUnit)
+  const b = UNITS.find((u) => u.value === ingredientBaseUnit)
+  if (!u || !b) return false
+  return u.dimension !== b.dimension
+}
+
+// Converts quantity to ingredient's base unit, bridging weight↔volume via density when needed.
+// density is g/ml — required when dimensions differ, ignored otherwise.
+export function convertToBaseUnitsWithDensity(
+  quantity: number,
+  unit: string,
+  ingredientBaseUnit: string,
+  density: number | null
+): number {
+  const u = UNITS.find((u) => u.value === unit)
+  if (!u) throw new Error(`Unknown unit: ${unit}`)
+
+  if (!needsCrossDimension(unit, ingredientBaseUnit)) {
+    return quantity * u.toBase
+  }
+
+  if (density === null) throw new Error(`No density data for cross-dimension conversion (${unit} → ${ingredientBaseUnit})`)
+
+  const baseQtyInUnitDimension = quantity * u.toBase // ml or g
+
+  if (u.dimension === 'volume') {
+    // volume → weight: ml × g/ml = g
+    return baseQtyInUnitDimension * density
+  } else {
+    // weight → volume: g ÷ (g/ml) = ml
+    return baseQtyInUnitDimension / density
+  }
+}
