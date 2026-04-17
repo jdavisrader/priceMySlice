@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
-import { convertToBaseUnits } from '@/lib/units'
+import { convertToBaseUnitsWithDensity, needsCrossDimension } from '@/lib/units'
+import { getDensity } from '@/lib/densities'
 import { saveCake } from '@/server/actions/cakes'
 
 export type RecipeOption = {
@@ -42,10 +43,18 @@ export function CakeCalculator({ recipeOptions }: { recipeOptions: RecipeOption[
 
   const lineItems = recipe?.ingredients.map((ing) => {
     const scaledQty = parseFloat(ing.quantity) * scaleFactor
-    const baseQty = convertToBaseUnits(scaledQty, ing.unit)
-    const lineTotal = baseQty * parseFloat(ing.pricePerBaseUnit)
-    return { ...ing, scaledQty, lineTotal }
+    const isCrossDimension = needsCrossDimension(ing.unit, ing.baseUnit)
+    const density = isCrossDimension ? getDensity(ing.ingredientName) : null
+    try {
+      const baseQty = convertToBaseUnitsWithDensity(scaledQty, ing.unit, ing.baseUnit, density)
+      const lineTotal = baseQty * parseFloat(ing.pricePerBaseUnit)
+      return { ...ing, scaledQty, lineTotal, conversionError: false }
+    } catch {
+      return { ...ing, scaledQty, lineTotal: NaN, conversionError: true }
+    }
   }) ?? []
+
+  const hasConversionError = lineItems.some((i) => i.conversionError)
 
   const ingredientTotal = lineItems.reduce((sum, i) => sum + i.lineTotal, 0)
   const laborNum = parseFloat(labor) || 0
@@ -98,7 +107,7 @@ export function CakeCalculator({ recipeOptions }: { recipeOptions: RecipeOption[
         <div className="space-y-1.5">
           <Label>Recipe</Label>
           <Select value={recipeId} onValueChange={handleRecipeChange}>
-            <SelectTrigger><SelectValue placeholder="Select a recipe…" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Select a recipe…">{recipe?.name}</SelectValue></SelectTrigger>
             <SelectContent>
               {recipeOptions.map((r) => (
                 <SelectItem key={r.id} value={r.id.toString()}>{r.name}</SelectItem>
@@ -118,13 +127,20 @@ export function CakeCalculator({ recipeOptions }: { recipeOptions: RecipeOption[
           <div className="space-y-1">
             <p className="text-sm font-medium mb-3">Ingredient cost</p>
             <div className="divide-y rounded-md border bg-white text-sm">
-              {lineItems.map((item, i) => (
-                <div key={i} className="flex items-center justify-between px-3 py-2">
-                  <span className="font-medium">{item.ingredientName}</span>
-                  <span className="text-muted-foreground">{item.scaledQty % 1 === 0 ? item.scaledQty : item.scaledQty.toFixed(2)} {item.unit}</span>
-                  <span>${item.lineTotal.toFixed(4)}</span>
+              {lineItems.map((item, i) => {
+                const qtyLabel = `${item.scaledQty % 1 === 0 ? item.scaledQty : item.scaledQty.toFixed(2)} ${item.unit}`
+                const priceLabel = item.conversionError ? 'No density data' : `$${item.lineTotal.toFixed(2)}`
+                return (
+                <div key={i} className="flex items-center gap-3 px-3 py-2">
+                  <span className="font-medium flex-1 min-w-0 truncate" title={item.ingredientName}>{item.ingredientName}</span>
+                  <span className="text-muted-foreground w-28 shrink-0 truncate text-right" title={qtyLabel}>{qtyLabel}</span>
+                  {item.conversionError
+                    ? <span className="text-destructive text-xs w-24 shrink-0 text-right" title={priceLabel}>{priceLabel}</span>
+                    : <span className="w-24 shrink-0 text-right tabular-nums" title={priceLabel}>{priceLabel}</span>
+                  }
                 </div>
-              ))}
+                )
+              })}
               <div className="flex justify-between px-3 py-2 font-medium bg-zinc-50">
                 <span>Ingredient total</span>
                 <span>${ingredientTotal.toFixed(2)}</span>
@@ -191,7 +207,7 @@ export function CakeCalculator({ recipeOptions }: { recipeOptions: RecipeOption[
 
       <div className="flex gap-2">
         <Button type="button" variant="outline" onClick={() => router.push('/cakes')} disabled={isPending}>Cancel</Button>
-        <Button type="submit" disabled={isPending || !recipe}>{isPending ? 'Saving…' : 'Save pricing'}</Button>
+        <Button type="submit" disabled={isPending || !recipe || hasConversionError}>{isPending ? 'Saving…' : 'Save pricing'}</Button>
       </div>
     </form>
   )

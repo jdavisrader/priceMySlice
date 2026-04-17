@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { UNITS } from '@/lib/units'
+import { getDensity } from '@/lib/densities'
 
 export type IngredientOption = {
   id: number
@@ -29,10 +30,14 @@ type Props = {
 export function RecipeIngredientRow({ row, ingredientOptions, onChange, onRemove }: Props) {
   const selected = ingredientOptions.find((i) => i.id.toString() === row.ingredientId)
 
+  const hasDensity = selected ? getDensity(selected.name) !== null : false
+
   const compatibleUnits = selected
     ? UNITS.filter((u) => {
         const baseDim = UNITS.find((u2) => u2.value === selected.baseUnit)?.dimension
-        return u.dimension === baseDim
+        if (u.dimension === baseDim) return true   // same dimension: always allowed
+        if (u.dimension === 'count') return false  // count never bridges
+        return hasDensity                          // cross-dimension: only if density known
       })
     : UNITS
 
@@ -45,7 +50,7 @@ export function RecipeIngredientRow({ row, ingredientOptions, onChange, onRemove
     <div className="flex items-center gap-2">
       <Select value={row.ingredientId} onValueChange={handleIngredientChange}>
         <SelectTrigger className="flex-1">
-          <SelectValue placeholder="Select ingredient…" />
+          <SelectValue placeholder="Select ingredient…">{selected?.name}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {ingredientOptions.map((i) => (
