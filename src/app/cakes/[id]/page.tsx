@@ -45,15 +45,16 @@ export default async function CakeDetailPage({ params }: { params: Promise<{ id:
         <>
           <p className="text-sm font-medium mb-2">Ingredient cost</p>
           <div className="rounded-md border bg-white divide-y text-sm mb-6">
-            {snapshots.map((s) => (
-              <div key={s.id} className="flex items-center justify-between px-3 py-2">
-                <span className="font-medium">{s.ingredientName}</span>
-                <span className="text-muted-foreground">
-                  {parseFloat(s.quantity) % 1 === 0 ? parseFloat(s.quantity) : parseFloat(s.quantity).toFixed(2)} {s.unit}
-                </span>
-                <span>${parseFloat(s.lineTotal).toFixed(4)}</span>
-              </div>
-            ))}
+            {snapshots.map((s) => {
+              const qtyLabel = `${parseFloat(s.quantity) % 1 === 0 ? parseFloat(s.quantity) : parseFloat(s.quantity).toFixed(2)} ${s.unit}`
+              return (
+                <div key={s.id} className="flex items-center gap-3 px-3 py-2">
+                  <span className="font-medium flex-1 min-w-0 truncate" title={s.ingredientName}>{s.ingredientName}</span>
+                  <span className="text-muted-foreground w-28 shrink-0 truncate text-right" title={qtyLabel}>{qtyLabel}</span>
+                  <span className="w-24 shrink-0 text-right tabular-nums">${parseFloat(s.lineTotal).toFixed(4)}</span>
+                </div>
+              )
+            })}
             <div className="flex justify-between px-3 py-2 font-medium bg-zinc-50">
               <span>Ingredient total</span>
               <span>${parseFloat(cake.totalIngredientCost).toFixed(2)}</span>
