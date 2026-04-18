@@ -12,9 +12,11 @@ type LineItem = {
 type Props = {
   lineItems: LineItem[]
   ingredientTotal: number
+  salesTaxAmount?: number
+  salesTaxPct?: number
 }
 
-export function IngredientCostTable({ lineItems, ingredientTotal }: Props) {
+export function IngredientCostTable({ lineItems, ingredientTotal, salesTaxAmount, salesTaxPct }: Props) {
   const unsectioned = lineItems.filter((i) => !i.section)
   const sectionNames = [...new Set(lineItems.filter((i) => i.section).map((i) => i.section!))]
 
@@ -50,6 +52,12 @@ export function IngredientCostTable({ lineItems, ingredientTotal }: Props) {
         <span>Ingredient total</span>
         <span>${ingredientTotal.toFixed(2)}</span>
       </div>
+      {salesTaxAmount !== undefined && salesTaxPct !== undefined && salesTaxPct > 0 && (
+        <div className="flex justify-between px-3 py-2 text-muted-foreground bg-zinc-50">
+          <span>Sales tax ({salesTaxPct.toFixed(2)}%)</span>
+          <span>${salesTaxAmount.toFixed(2)}</span>
+        </div>
+      )}
     </div>
   )
 }

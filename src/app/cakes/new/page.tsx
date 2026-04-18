@@ -5,9 +5,13 @@ import { eq, asc } from 'drizzle-orm'
 import { CakeCalculator, type RecipeOption } from '@/components/cakes/cake-calculator'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { getSettings } from '@/server/actions/settings'
 
 export default async function NewCakePage() {
-  const allRecipes = await db.select().from(recipes).orderBy(asc(recipes.name))
+  const [allRecipes, settings] = await Promise.all([
+    db.select().from(recipes).orderBy(asc(recipes.name)),
+    getSettings(),
+  ])
 
   const allRecipeIngredients = await db
     .select({
@@ -51,7 +55,7 @@ export default async function NewCakePage() {
         <h2 className="text-2xl font-semibold tracking-tight">Price a Cake</h2>
         <p className="text-sm text-muted-foreground mt-1">Select a recipe to calculate ingredient costs.</p>
       </div>
-      <CakeCalculator recipeOptions={recipeOptions} />
+      <CakeCalculator recipeOptions={recipeOptions} defaultSalesTaxRate={parseFloat(settings.defaultSalesTaxRate)} />
     </div>
   )
 }

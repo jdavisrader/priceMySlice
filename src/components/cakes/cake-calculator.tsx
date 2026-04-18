@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator'
 import { convertToBaseUnitsWithDensity, needsCrossDimension } from '@/lib/units'
 import { getDensity } from '@/lib/densities'
 import { saveCake } from '@/server/actions/cakes'
+import { updateDefaultSalesTaxRate } from '@/server/actions/settings'
 import { IngredientCostTable } from './ingredient-cost-table'
 
 export type RecipeOption = {
@@ -28,7 +29,7 @@ export type RecipeOption = {
   }[]
 }
 
-export function CakeCalculator({ recipeOptions }: { recipeOptions: RecipeOption[] }) {
+export function CakeCalculator({ recipeOptions, defaultSalesTaxRate }: { recipeOptions: RecipeOption[], defaultSalesTaxRate: number }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [name, setName] = useState('')
@@ -36,6 +37,8 @@ export function CakeCalculator({ recipeOptions }: { recipeOptions: RecipeOption[
   const [servings, setServings] = useState('')
   const [labor, setLabor] = useState('')
   const [packaging, setPackaging] = useState('')
+  const [supplies, setSupplies] = useState('')
+  const [salesTaxPct, setSalesTaxPct] = useState(defaultSalesTaxRate > 0 ? (defaultSalesTaxRate * 100).toString() : '')
   const [markup, setMarkup] = useState('3')
   const [finalPrice, setFinalPrice] = useState('')
   const [notes, setNotes] = useState('')
@@ -62,7 +65,10 @@ export function CakeCalculator({ recipeOptions }: { recipeOptions: RecipeOption[
   const ingredientTotal = lineItems.reduce((sum, i) => sum + i.lineTotal, 0)
   const laborNum = parseFloat(labor) || 0
   const packagingNum = parseFloat(packaging) || 0
-  const totalCost = ingredientTotal + laborNum + packagingNum
+  const suppliesNum = parseFloat(supplies) || 0
+  const salesTaxRate = (parseFloat(salesTaxPct) || 0) / 100
+  const salesTaxAmount = ingredientTotal * salesTaxRate
+  const totalCost = ingredientTotal + salesTaxAmount + laborNum + packagingNum + suppliesNum
   const markupNum = parseFloat(markup) || 3
   const suggestedPrice = totalCost * markupNum
 
@@ -75,12 +81,15 @@ export function CakeCalculator({ recipeOptions }: { recipeOptions: RecipeOption[
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     startTransition(async () => {
+      await updateDefaultSalesTaxRate(salesTaxRate)
       const id = await saveCake({
         name,
         recipeId: recipe?.id,
         servings: servingsNum || recipe?.servings || 1,
         laborCost: laborNum,
         packagingCost: packagingNum,
+        suppliesCost: suppliesNum,
+        salesTaxRate,
         totalIngredientCost: ingredientTotal,
         totalCost,
         markupMultiplier: markupNum,
@@ -131,7 +140,7 @@ export function CakeCalculator({ recipeOptions }: { recipeOptions: RecipeOption[
           <Separator />
           <div className="space-y-1">
             <p className="text-sm font-medium mb-3">Ingredient cost</p>
-            <IngredientCostTable lineItems={lineItems} ingredientTotal={ingredientTotal} />
+            <IngredientCostTable lineItems={lineItems} ingredientTotal={ingredientTotal} salesTaxAmount={salesTaxAmount} salesTaxPct={parseFloat(salesTaxPct) || 0} />
           </div>
         </>
       )}
@@ -148,6 +157,14 @@ export function CakeCalculator({ recipeOptions }: { recipeOptions: RecipeOption[
           <div className="space-y-1.5">
             <Label htmlFor="packaging">Packaging ($)</Label>
             <Input id="packaging" type="number" min="0" step="0.01" value={packaging} onChange={(e) => setPackaging(e.target.value)} placeholder="0.00" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="supplies">Supplies ($)</Label>
+            <Input id="supplies" type="number" min="0" step="0.01" value={supplies} onChange={(e) => setSupplies(e.target.value)} placeholder="0.00" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="salesTax">Sales tax (%)</Label>
+            <Input id="salesTax" type="number" min="0" step="0.01" value={salesTaxPct} onChange={(e) => setSalesTaxPct(e.target.value)} placeholder="0.00" />
           </div>
         </div>
       </div>

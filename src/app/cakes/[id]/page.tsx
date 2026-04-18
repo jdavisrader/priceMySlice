@@ -74,6 +74,12 @@ export default async function CakeDetailPage({ params }: { params: Promise<{ id:
                     <span>Ingredient total</span>
                     <span>${parseFloat(cake.totalIngredientCost).toFixed(2)}</span>
                   </div>
+                  {parseFloat(cake.salesTaxRate) > 0 && (
+                    <div className="flex justify-between px-3 py-2 text-muted-foreground bg-zinc-50">
+                      <span>Sales tax ({(parseFloat(cake.salesTaxRate) * 100).toFixed(2)}%)</span>
+                      <span>${(parseFloat(cake.totalIngredientCost) * parseFloat(cake.salesTaxRate)).toFixed(2)}</span>
+                    </div>
+                  )}
                 </>
               )
             })()}
@@ -90,6 +96,10 @@ export default async function CakeDetailPage({ params }: { params: Promise<{ id:
         <div className="flex justify-between px-3 py-2">
           <span className="text-muted-foreground">Packaging</span>
           <span>${parseFloat(cake.packagingCost).toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between px-3 py-2">
+          <span className="text-muted-foreground">Supplies</span>
+          <span>${parseFloat(cake.suppliesCost).toFixed(2)}</span>
         </div>
       </div>
 
