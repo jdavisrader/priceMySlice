@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm'
 import { buttonVariants } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
+import { formatQuantity } from '@/lib/fractions'
 
 export default async function CakeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -46,7 +47,7 @@ export default async function CakeDetailPage({ params }: { params: Promise<{ id:
           <p className="text-sm font-medium mb-2">Ingredient cost</p>
           <div className="rounded-md border bg-white divide-y text-sm mb-6">
             {snapshots.map((s) => {
-              const qtyLabel = `${parseFloat(s.quantity) % 1 === 0 ? parseFloat(s.quantity) : parseFloat(s.quantity).toFixed(2)} ${s.unit}`
+              const qtyLabel = `${formatQuantity(parseFloat(s.quantity), s.unit)} ${s.unit}`
               return (
                 <div key={s.id} className="flex items-center gap-3 px-3 py-2">
                   <span className="font-medium flex-1 min-w-0 truncate" title={s.ingredientName}>{s.ingredientName}</span>
