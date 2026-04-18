@@ -5,6 +5,7 @@ import type { InferSelectModel } from 'drizzle-orm'
 import type { ingredients } from '@/db/schema'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   AlertDialog,
@@ -31,10 +32,17 @@ import { formatPricePerUnit } from '@/lib/units'
 type Ingredient = InferSelectModel<typeof ingredients>
 
 export function IngredientsClient({ ingredients }: { ingredients: Ingredient[] }) {
+  const [sort, setSort] = useState<'a-z' | 'z-a' | 'recent'>('a-z')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Ingredient | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Ingredient | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  const sorted = [...ingredients].sort((a, b) => {
+    if (sort === 'a-z') return a.name.localeCompare(b.name)
+    if (sort === 'z-a') return b.name.localeCompare(a.name)
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  })
 
   function openAdd() {
     setEditing(null)
@@ -63,10 +71,22 @@ export function IngredientsClient({ ingredients }: { ingredients: Ingredient[] }
             Manage your ingredients and their current prices.
           </p>
         </div>
-        <Button onClick={openAdd}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add ingredient
-        </Button>
+        <div className="flex items-center gap-3">
+          <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="a-z">Name: A → Z</SelectItem>
+              <SelectItem value="z-a">Name: Z → A</SelectItem>
+              <SelectItem value="recent">Recently updated</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={openAdd}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add ingredient
+          </Button>
+        </div>
       </div>
 
       {ingredients.length === 0 ? (
@@ -90,9 +110,14 @@ export function IngredientsClient({ ingredients }: { ingredients: Ingredient[] }
               </TableRow>
             </TableHeader>
             <TableBody>
-              {ingredients.map((ingredient) => (
+              {sorted.map((ingredient) => (
                 <TableRow key={ingredient.id}>
-                  <TableCell className="font-medium">{ingredient.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {ingredient.name}
+                    {ingredient.notes && (
+                      <p className="text-xs text-muted-foreground font-normal mt-0.5">{ingredient.notes}</p>
+                    )}
+                  </TableCell>
                   <TableCell>
                     {parseFloat(ingredient.purchaseQuantity).toString()} {ingredient.purchaseUnit}
                   </TableCell>
