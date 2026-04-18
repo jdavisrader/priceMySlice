@@ -10,9 +10,18 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
 import { RecipeIngredientRow, type IngredientOption, type RowData } from './recipe-ingredient-row'
+import { SectionBlock } from './section-block'
 import { createRecipe, updateRecipe } from '@/server/actions/recipes'
 
-type ExistingIngredient = { ingredientId: number; quantity: string; unit: string }
+type SectionData = { uid: string; name: string }
+
+type ExistingIngredient = {
+  ingredientId: number
+  quantity: string
+  unit: string
+  section: string | null
+  sortOrder: number
+}
 
 type Props = {
   ingredientOptions: IngredientOption[]
@@ -27,18 +36,32 @@ export function RecipeForm({ ingredientOptions, recipe, existingIngredients }: P
   const [description, setDescription] = useState(recipe?.description ?? '')
   const [servings, setServings] = useState(recipe?.servings?.toString() ?? '1')
   const [notes, setNotes] = useState(recipe?.notes ?? '')
-  const [rows, setRows] = useState<RowData[]>(
-    existingIngredients?.map((ei) => ({
-      uid: crypto.randomUUID(),
-      ingredientId: ei.ingredientId.toString(),
-      quantity: parseFloat(ei.quantity).toString(),
-      unit: ei.unit,
-    })) ?? []
-  )
 
-  function addRow() {
-    setRows((prev) => [...prev, { uid: crypto.randomUUID(), ingredientId: '', quantity: '', unit: '' }])
-  }
+  const [sections, setSections] = useState<SectionData[]>(() => {
+    if (!existingIngredients) return []
+    const seen = new Map<string, SectionData>()
+    ;[...existingIngredients]
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .forEach((ei) => {
+        if (ei.section && !seen.has(ei.section)) {
+          seen.set(ei.section, { uid: crypto.randomUUID(), name: ei.section })
+        }
+      })
+    return Array.from(seen.values())
+  })
+
+  const [rows, setRows] = useState<RowData[]>(
+    existingIngredients
+      ?.slice()
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((ei) => ({
+        uid: crypto.randomUUID(),
+        ingredientId: ei.ingredientId.toString(),
+        quantity: parseFloat(ei.quantity).toString(),
+        unit: ei.unit,
+        section: ei.section ?? null,
+      })) ?? []
+  )
 
   function updateRow(uid: string, updated: RowData) {
     setRows((prev) => prev.map((r) => (r.uid === uid ? updated : r)))
@@ -48,19 +71,49 @@ export function RecipeForm({ ingredientOptions, recipe, existingIngredients }: P
     setRows((prev) => prev.filter((r) => r.uid !== uid))
   }
 
+  function addRowToSection(sectionName: string | null) {
+    setRows((prev) => [...prev, { uid: crypto.randomUUID(), ingredientId: '', quantity: '', unit: '', section: sectionName }])
+  }
+
+  function addSection() {
+    setSections((prev) => [...prev, { uid: crypto.randomUUID(), name: 'New section' }])
+  }
+
+  function updateSectionName(uid: string, newName: string) {
+    const section = sections.find((s) => s.uid === uid)
+    if (!section) return
+    const oldName = section.name
+    setSections((prev) => prev.map((s) => (s.uid === uid ? { ...s, name: newName } : s)))
+    setRows((prev) => prev.map((r) => (r.section === oldName ? { ...r, section: newName } : r)))
+  }
+
+  function removeSection(uid: string) {
+    const section = sections.find((s) => s.uid === uid)
+    if (!section) return
+    setSections((prev) => prev.filter((s) => s.uid !== uid))
+    setRows((prev) => prev.filter((r) => r.section !== section.name))
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const validRows = rows.filter((r) => r.ingredientId && r.quantity && r.unit)
+    const unsectionedRows = rows.filter((r) => r.section === null)
+    const allRows: RowData[] = [...unsectionedRows]
+    sections.forEach((s) => {
+      allRows.push(...rows.filter((r) => r.section === s.name))
+    })
+    const validRows = allRows.filter((r) => r.ingredientId && r.quantity && r.unit)
     startTransition(async () => {
       const data = {
         name,
         description: description || undefined,
         servings: parseInt(servings),
         notes: notes || undefined,
-        ingredients: validRows.map((r) => ({
+        ingredients: validRows.map((r, idx) => ({
           ingredientId: parseInt(r.ingredientId),
           quantity: parseFloat(r.quantity),
           unit: r.unit,
+          section: r.section ?? null,
+          sortOrder: idx,
         })),
       }
       if (recipe) {
@@ -71,6 +124,8 @@ export function RecipeForm({ ingredientOptions, recipe, existingIngredients }: P
       router.push('/recipes')
     })
   }
+
+  const unsectionedRows = rows.filter((r) => r.section === null)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 max-w-2xl">
@@ -133,10 +188,10 @@ export function RecipeForm({ ingredientOptions, recipe, existingIngredients }: P
           </div>
         ) : (
           <>
-            {rows.length === 0 && (
+            {unsectionedRows.length === 0 && sections.length === 0 && (
               <p className="text-sm text-muted-foreground">No ingredients added yet.</p>
             )}
-            {rows.map((row) => (
+            {unsectionedRows.map((row) => (
               <RecipeIngredientRow
                 key={row.uid}
                 row={row}
@@ -145,9 +200,28 @@ export function RecipeForm({ ingredientOptions, recipe, existingIngredients }: P
                 onRemove={() => removeRow(row.uid)}
               />
             ))}
-            <Button type="button" variant="outline" size="sm" onClick={addRow}>
+            <Button type="button" variant="outline" size="sm" onClick={() => addRowToSection(null)}>
               <Plus className="h-4 w-4 mr-2" />
               Add ingredient
+            </Button>
+
+            {sections.map((section) => (
+              <SectionBlock
+                key={section.uid}
+                section={section}
+                rows={rows.filter((r) => r.section === section.name)}
+                ingredientOptions={ingredientOptions}
+                onNameChange={updateSectionName}
+                onRemove={removeSection}
+                onAddRow={addRowToSection}
+                onUpdateRow={updateRow}
+                onRemoveRow={removeRow}
+              />
+            ))}
+
+            <Button type="button" variant="outline" size="sm" onClick={addSection}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add section
             </Button>
           </>
         )}

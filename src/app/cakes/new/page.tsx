@@ -17,9 +17,12 @@ export default async function NewCakePage() {
       unit: recipeIngredients.unit,
       pricePerBaseUnit: ingredients.pricePerBaseUnit,
       baseUnit: ingredients.baseUnit,
+      section: recipeIngredients.section,
+      sortOrder: recipeIngredients.sortOrder,
     })
     .from(recipeIngredients)
     .innerJoin(ingredients, eq(recipeIngredients.ingredientId, ingredients.id))
+    .orderBy(asc(recipeIngredients.sortOrder))
 
   const recipeOptions: RecipeOption[] = allRecipes.map((r) => ({
     id: r.id,

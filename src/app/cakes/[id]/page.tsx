@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { db } from '@/db'
 import { cakes, cakeIngredientSnapshots, recipes } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, asc } from 'drizzle-orm'
 import { buttonVariants } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
@@ -19,7 +19,7 @@ export default async function CakeDetailPage({ params }: { params: Promise<{ id:
       .leftJoin(recipes, eq(cakes.recipeId, recipes.id))
       .where(eq(cakes.id, cakeId))
       .limit(1),
-    db.select().from(cakeIngredientSnapshots).where(eq(cakeIngredientSnapshots.cakeId, cakeId)),
+    db.select().from(cakeIngredientSnapshots).where(eq(cakeIngredientSnapshots.cakeId, cakeId)).orderBy(asc(cakeIngredientSnapshots.sortOrder)),
   ])
 
   if (cakeRows.length === 0) notFound()
@@ -46,20 +46,37 @@ export default async function CakeDetailPage({ params }: { params: Promise<{ id:
         <>
           <p className="text-sm font-medium mb-2">Ingredient cost</p>
           <div className="rounded-md border bg-white divide-y text-sm mb-6">
-            {snapshots.map((s) => {
-              const qtyLabel = `${formatQuantity(parseFloat(s.quantity), s.unit)} ${s.unit}`
+            {(() => {
+              const unsectioned = snapshots.filter((s) => !s.section)
+              const sectionNames = [...new Set(snapshots.filter((s) => s.section).map((s) => s.section!))]
+              function renderSnapshotRow(s: typeof snapshots[number]) {
+                const qtyLabel = `${formatQuantity(parseFloat(s.quantity), s.unit)} ${s.unit}`
+                return (
+                  <div key={s.id} className="flex items-center gap-3 px-3 py-2">
+                    <span className="font-medium flex-1 min-w-0 truncate" title={s.ingredientName}>{s.ingredientName}</span>
+                    <span className="text-muted-foreground w-28 shrink-0 truncate text-right" title={qtyLabel}>{qtyLabel}</span>
+                    <span className="w-24 shrink-0 text-right tabular-nums">${parseFloat(s.lineTotal).toFixed(4)}</span>
+                  </div>
+                )
+              }
               return (
-                <div key={s.id} className="flex items-center gap-3 px-3 py-2">
-                  <span className="font-medium flex-1 min-w-0 truncate" title={s.ingredientName}>{s.ingredientName}</span>
-                  <span className="text-muted-foreground w-28 shrink-0 truncate text-right" title={qtyLabel}>{qtyLabel}</span>
-                  <span className="w-24 shrink-0 text-right tabular-nums">${parseFloat(s.lineTotal).toFixed(4)}</span>
-                </div>
+                <>
+                  {unsectioned.map(renderSnapshotRow)}
+                  {sectionNames.map((sectionName) => (
+                    <div key={sectionName}>
+                      <div className="px-3 py-1.5 bg-zinc-50 text-xs font-medium text-muted-foreground">
+                        {sectionName}
+                      </div>
+                      {snapshots.filter((s) => s.section === sectionName).map(renderSnapshotRow)}
+                    </div>
+                  ))}
+                  <div className="flex justify-between px-3 py-2 font-medium bg-zinc-50">
+                    <span>Ingredient total</span>
+                    <span>${parseFloat(cake.totalIngredientCost).toFixed(2)}</span>
+                  </div>
+                </>
               )
-            })}
-            <div className="flex justify-between px-3 py-2 font-medium bg-zinc-50">
-              <span>Ingredient total</span>
-              <span>${parseFloat(cake.totalIngredientCost).toFixed(2)}</span>
-            </div>
+            })()}
           </div>
         </>
       )}

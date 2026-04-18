@@ -15,9 +15,12 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
         ingredientId: recipeIngredients.ingredientId,
         quantity: recipeIngredients.quantity,
         unit: recipeIngredients.unit,
+        section: recipeIngredients.section,
+        sortOrder: recipeIngredients.sortOrder,
       })
       .from(recipeIngredients)
-      .where(eq(recipeIngredients.recipeId, recipeId)),
+      .where(eq(recipeIngredients.recipeId, recipeId))
+      .orderBy(asc(recipeIngredients.sortOrder)),
     db
       .select({ id: ingredients.id, name: ingredients.name, baseUnit: ingredients.baseUnit })
       .from(ingredients)

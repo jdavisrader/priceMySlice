@@ -9,9 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { convertToBaseUnitsWithDensity, needsCrossDimension } from '@/lib/units'
-import { formatQuantity } from '@/lib/fractions'
 import { getDensity } from '@/lib/densities'
 import { saveCake } from '@/server/actions/cakes'
+import { IngredientCostTable } from './ingredient-cost-table'
 
 export type RecipeOption = {
   id: number
@@ -23,6 +23,8 @@ export type RecipeOption = {
     unit: string
     pricePerBaseUnit: string
     baseUnit: string
+    section: string | null
+    sortOrder: number
   }[]
 }
 
@@ -91,6 +93,8 @@ export function CakeCalculator({ recipeOptions }: { recipeOptions: RecipeOption[
           unit: i.unit,
           pricePerBaseUnit: parseFloat(i.pricePerBaseUnit),
           lineTotal: i.lineTotal,
+          section: i.section ?? null,
+          sortOrder: i.sortOrder ?? 0,
         })),
       })
       router.push(`/cakes/${id}`)
@@ -127,26 +131,7 @@ export function CakeCalculator({ recipeOptions }: { recipeOptions: RecipeOption[
           <Separator />
           <div className="space-y-1">
             <p className="text-sm font-medium mb-3">Ingredient cost</p>
-            <div className="divide-y rounded-md border bg-white text-sm">
-              {lineItems.map((item, i) => {
-                const qtyLabel = `${formatQuantity(item.scaledQty, item.unit)} ${item.unit}`
-                const priceLabel = item.conversionError ? 'No density data' : `$${item.lineTotal.toFixed(2)}`
-                return (
-                <div key={i} className="flex items-center gap-3 px-3 py-2">
-                  <span className="font-medium flex-1 min-w-0 truncate" title={item.ingredientName}>{item.ingredientName}</span>
-                  <span className="text-muted-foreground w-28 shrink-0 truncate text-right" title={qtyLabel}>{qtyLabel}</span>
-                  {item.conversionError
-                    ? <span className="text-destructive text-xs w-24 shrink-0 text-right" title={priceLabel}>{priceLabel}</span>
-                    : <span className="w-24 shrink-0 text-right tabular-nums" title={priceLabel}>{priceLabel}</span>
-                  }
-                </div>
-                )
-              })}
-              <div className="flex justify-between px-3 py-2 font-medium bg-zinc-50">
-                <span>Ingredient total</span>
-                <span>${ingredientTotal.toFixed(2)}</span>
-              </div>
-            </div>
+            <IngredientCostTable lineItems={lineItems} ingredientTotal={ingredientTotal} />
           </div>
         </>
       )}

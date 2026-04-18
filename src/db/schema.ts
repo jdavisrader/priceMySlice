@@ -41,6 +41,8 @@ export const recipeIngredients = pgTable('recipe_ingredients', {
     .references(() => ingredients.id),
   quantity: numeric('quantity', { precision: 10, scale: 4 }).notNull(),
   unit: varchar('unit', { length: 50 }).notNull(),
+  section: varchar('section', { length: 100 }),
+  sortOrder: integer('sort_order').notNull().default(0),
 })
 
 export const cakes = pgTable('cakes', {
@@ -69,4 +71,6 @@ export const cakeIngredientSnapshots = pgTable('cake_ingredient_snapshots', {
   unit: varchar('unit', { length: 50 }).notNull(),
   pricePerBaseUnit: numeric('price_per_base_unit', { precision: 12, scale: 8 }).notNull(),
   lineTotal: numeric('line_total', { precision: 10, scale: 4 }).notNull(),
+  section: varchar('section', { length: 100 }),
+  sortOrder: integer('sort_order').notNull().default(0),
 })

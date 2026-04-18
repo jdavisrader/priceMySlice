@@ -9,6 +9,8 @@ type RecipeIngredientInput = {
   ingredientId: number
   quantity: number
   unit: string
+  section: string | null
+  sortOrder: number
 }
 
 type RecipeInput = {
@@ -37,6 +39,8 @@ export async function createRecipe(data: RecipeInput): Promise<number> {
         ingredientId: i.ingredientId,
         quantity: i.quantity.toString(),
         unit: i.unit,
+        section: i.section ?? null,
+        sortOrder: i.sortOrder,
       }))
     )
   }
@@ -66,6 +70,8 @@ export async function updateRecipe(id: number, data: RecipeInput): Promise<void>
         ingredientId: i.ingredientId,
         quantity: i.quantity.toString(),
         unit: i.unit,
+        section: i.section ?? null,
+        sortOrder: i.sortOrder,
       }))
     )
   }
