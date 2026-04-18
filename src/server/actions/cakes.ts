@@ -11,6 +11,8 @@ type IngredientSnapshot = {
   unit: string
   pricePerBaseUnit: number
   lineTotal: number
+  section: string | null
+  sortOrder: number
 }
 
 type SaveCakeInput = {
@@ -55,6 +57,8 @@ export async function saveCake(data: SaveCakeInput): Promise<number> {
         unit: s.unit,
         pricePerBaseUnit: s.pricePerBaseUnit.toString(),
         lineTotal: s.lineTotal.toFixed(4),
+        section: s.section ?? null,
+        sortOrder: s.sortOrder,
       }))
     )
   }

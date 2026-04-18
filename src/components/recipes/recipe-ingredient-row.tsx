@@ -18,6 +18,7 @@ export type RowData = {
   ingredientId: string
   quantity: string
   unit: string
+  section: string | null
 }
 
 type Props = {
