@@ -42,13 +42,15 @@ export function CakeCalculator({ recipeOptions, defaultSalesTaxRate }: { recipeO
   const [markup, setMarkup] = useState('3')
   const [finalPrice, setFinalPrice] = useState('')
   const [notes, setNotes] = useState('')
+  const [sectionScales, setSectionScales] = useState<Record<string, string>>({})
 
   const recipe = recipeOptions.find((r) => r.id.toString() === recipeId)
   const servingsNum = parseFloat(servings) || 0
   const scaleFactor = recipe && servingsNum > 0 ? servingsNum / recipe.servings : 1
 
   const lineItems = recipe?.ingredients.map((ing) => {
-    const scaledQty = parseFloat(ing.quantity) * scaleFactor
+    const sectionScale = parseFloat(sectionScales[ing.section ?? ''] || '1') || 1
+    const scaledQty = parseFloat(ing.quantity) * scaleFactor * sectionScale
     const isCrossDimension = needsCrossDimension(ing.unit, ing.baseUnit)
     const density = isCrossDimension ? getDensity(ing.ingredientName) : null
     try {
@@ -76,6 +78,7 @@ export function CakeCalculator({ recipeOptions, defaultSalesTaxRate }: { recipeO
     const r = recipeOptions.find((r) => r.id.toString() === id)
     setRecipeId(id ?? '')
     setServings(r ? r.servings.toString() : '')
+    setSectionScales({})
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -131,7 +134,7 @@ export function CakeCalculator({ recipeOptions, defaultSalesTaxRate }: { recipeO
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="servings">Servings</Label>
-          <Input id="servings" type="number" min="1" value={servings} onChange={(e) => setServings(e.target.value)} placeholder="—" disabled={!recipe} />
+          <Input id="servings" type="number" min="1" value={servings} onChange={(e) => { setServings(e.target.value); setSectionScales({}) }} placeholder="—" disabled={!recipe} />
         </div>
       </div>
 
@@ -140,7 +143,14 @@ export function CakeCalculator({ recipeOptions, defaultSalesTaxRate }: { recipeO
           <Separator />
           <div className="space-y-1">
             <p className="text-sm font-medium mb-3">Ingredient cost</p>
-            <IngredientCostTable lineItems={lineItems} ingredientTotal={ingredientTotal} salesTaxAmount={salesTaxAmount} salesTaxPct={parseFloat(salesTaxPct) || 0} />
+            <IngredientCostTable
+              lineItems={lineItems}
+              ingredientTotal={ingredientTotal}
+              salesTaxAmount={salesTaxAmount}
+              salesTaxPct={parseFloat(salesTaxPct) || 0}
+              sectionScales={sectionScales}
+              onSectionScaleChange={(section, value) => setSectionScales((prev) => ({ ...prev, [section]: value }))}
+            />
           </div>
         </>
       )}
