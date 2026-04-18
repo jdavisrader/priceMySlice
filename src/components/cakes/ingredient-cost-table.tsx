@@ -40,10 +40,21 @@ export function IngredientCostTable({ lineItems, ingredientTotal, salesTaxAmount
   return (
     <div className="divide-y rounded-md border bg-white text-sm">
       {unsectioned.map((item, i) => renderRow(item, `u-${i}`))}
+      {unsectioned.length > 0 && sectionNames.length > 0 && (
+        <div className="flex justify-between px-3 py-1.5 text-xs text-muted-foreground bg-zinc-50/60">
+          <span>Subtotal</span>
+          <span className="tabular-nums">
+            ${unsectioned
+              .filter((i) => !i.conversionError)
+              .reduce((sum, i) => sum + i.lineTotal, 0)
+              .toFixed(2)}
+          </span>
+        </div>
+      )}
       {sectionNames.map((sectionName) => (
         <div key={sectionName}>
-          <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-50">
-            <span className="text-xs font-medium text-muted-foreground">{sectionName}</span>
+          <div className="flex items-center justify-between px-3 py-2 bg-zinc-100 border-b">
+            <span className="text-sm font-semibold text-foreground">{sectionName}</span>
             {onSectionScaleChange && (
               <div className="flex items-center gap-1">
                 <span className="text-xs text-muted-foreground">Scale</span>
@@ -62,6 +73,15 @@ export function IngredientCostTable({ lineItems, ingredientTotal, salesTaxAmount
           {lineItems.filter((i) => i.section === sectionName).map((item, i) =>
             renderRow(item, `${sectionName}-${i}`)
           )}
+          <div className="flex justify-between px-3 py-1.5 text-xs text-muted-foreground bg-zinc-50/60 border-t">
+            <span>{sectionName} total</span>
+            <span className="tabular-nums">
+              ${lineItems
+                .filter((i) => i.section === sectionName && !i.conversionError)
+                .reduce((sum, i) => sum + i.lineTotal, 0)
+                .toFixed(2)}
+            </span>
+          </div>
         </div>
       ))}
       <div className="flex justify-between px-3 py-2 font-medium bg-zinc-50">

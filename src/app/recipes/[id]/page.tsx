@@ -2,46 +2,66 @@ import { notFound } from 'next/navigation'
 import { db } from '@/db'
 import { recipes, recipeIngredients, ingredients } from '@/db/schema'
 import { eq, asc } from 'drizzle-orm'
-import { RecipeForm } from '@/components/recipes/recipe-form'
+import { RecipeDetail } from '@/components/recipes/recipe-detail'
+import { convertToBaseUnitsWithDensity, needsCrossDimension } from '@/lib/units'
+import { getDensity } from '@/lib/densities'
 
-export default async function EditRecipePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const recipeId = parseInt(id)
 
-  const [recipeRows, ingredientRows, ingredientOptions] = await Promise.all([
+  const [recipeRows, ingredientRows] = await Promise.all([
     db.select().from(recipes).where(eq(recipes.id, recipeId)).limit(1),
     db
       .select({
-        ingredientId: recipeIngredients.ingredientId,
+        ingredientName: ingredients.name,
         quantity: recipeIngredients.quantity,
         unit: recipeIngredients.unit,
         section: recipeIngredients.section,
         sortOrder: recipeIngredients.sortOrder,
+        pricePerBaseUnit: ingredients.pricePerBaseUnit,
+        baseUnit: ingredients.baseUnit,
       })
       .from(recipeIngredients)
+      .innerJoin(ingredients, eq(recipeIngredients.ingredientId, ingredients.id))
       .where(eq(recipeIngredients.recipeId, recipeId))
       .orderBy(asc(recipeIngredients.sortOrder)),
-    db
-      .select({ id: ingredients.id, name: ingredients.name, baseUnit: ingredients.baseUnit })
-      .from(ingredients)
-      .orderBy(asc(ingredients.name)),
   ])
 
   if (recipeRows.length === 0) notFound()
 
   const recipe = recipeRows[0]
 
+  let ingredientTotal = 0
+  const lineItems = ingredientRows.map((row) => {
+    const qty = parseFloat(row.quantity)
+    const pricePerBase = parseFloat(row.pricePerBaseUnit)
+    const crossDim = needsCrossDimension(row.unit, row.baseUnit)
+    const density = crossDim ? getDensity(row.ingredientName) : null
+    const conversionError = crossDim && density === null
+
+    let lineTotal = 0
+    if (!conversionError) {
+      const baseQty = convertToBaseUnitsWithDensity(qty, row.unit, row.baseUnit, density)
+      lineTotal = baseQty * pricePerBase
+      ingredientTotal += lineTotal
+    }
+
+    return {
+      ingredientName: row.ingredientName,
+      scaledQty: qty,
+      unit: row.unit,
+      lineTotal,
+      conversionError,
+      section: row.section,
+    }
+  })
+
   return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold tracking-tight">Edit recipe</h2>
-        <p className="text-sm text-muted-foreground mt-1">{recipe.name}</p>
-      </div>
-      <RecipeForm
-        ingredientOptions={ingredientOptions}
-        recipe={recipe}
-        existingIngredients={ingredientRows}
-      />
-    </div>
+    <RecipeDetail
+      recipe={recipe}
+      lineItems={lineItems}
+      ingredientTotal={ingredientTotal}
+    />
   )
 }

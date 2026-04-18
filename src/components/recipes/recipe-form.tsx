@@ -118,10 +118,11 @@ export function RecipeForm({ ingredientOptions, recipe, existingIngredients }: P
       }
       if (recipe) {
         await updateRecipe(recipe.id, data)
+        router.push(`/recipes/${recipe.id}`)
       } else {
         await createRecipe(data)
+        router.push('/recipes')
       }
-      router.push('/recipes')
     })
   }
 
@@ -228,7 +229,7 @@ export function RecipeForm({ ingredientOptions, recipe, existingIngredients }: P
       </div>
 
       <div className="flex gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={() => router.push('/recipes')} disabled={isPending}>
+        <Button type="button" variant="outline" onClick={() => router.push(recipe ? `/recipes/${recipe.id}` : '/recipes')} disabled={isPending}>
           Cancel
         </Button>
         <Button type="submit" disabled={isPending}>
