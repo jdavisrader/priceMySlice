@@ -161,6 +161,7 @@ export function IngredientsClient({ ingredients }: { ingredients: Ingredient[] }
           </DialogHeader>
           <IngredientForm
             ingredient={editing ?? undefined}
+            existingIngredients={ingredients}
             onSuccess={() => setDialogOpen(false)}
             onCancel={() => setDialogOpen(false)}
           />
