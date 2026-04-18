@@ -50,6 +50,39 @@ export async function getRecipesForCopy(excludeId?: number): Promise<RecipeForCo
   return Array.from(recipeMap.values())
 }
 
+export type RecipeFullCopy = {
+  name: string
+  description: string | null
+  servings: number
+  notes: string | null
+  ingredients: { ingredientId: number; quantity: string; unit: string; section: string | null; sortOrder: number }[]
+}
+
+export async function getRecipeFullCopy(id: number): Promise<RecipeFullCopy | null> {
+  const recipeRows = await db
+    .select({ name: recipes.name, description: recipes.description, servings: recipes.servings, notes: recipes.notes })
+    .from(recipes)
+    .where(eq(recipes.id, id))
+    .limit(1)
+
+  if (recipeRows.length === 0) return null
+  const recipe = recipeRows[0]
+
+  const ingredients = await db
+    .select({
+      ingredientId: recipeIngredients.ingredientId,
+      quantity: recipeIngredients.quantity,
+      unit: recipeIngredients.unit,
+      section: recipeIngredients.section,
+      sortOrder: recipeIngredients.sortOrder,
+    })
+    .from(recipeIngredients)
+    .where(eq(recipeIngredients.recipeId, id))
+    .orderBy(asc(recipeIngredients.sortOrder))
+
+  return { ...recipe, ingredients }
+}
+
 type RecipeIngredientInput = {
   ingredientId: number
   quantity: number
