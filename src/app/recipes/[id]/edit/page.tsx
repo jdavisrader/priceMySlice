@@ -3,12 +3,13 @@ import { db } from '@/db'
 import { recipes, recipeIngredients, ingredients } from '@/db/schema'
 import { eq, asc } from 'drizzle-orm'
 import { RecipeForm } from '@/components/recipes/recipe-form'
+import { getRecipesForCopy } from '@/server/actions/recipes'
 
 export default async function EditRecipePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const recipeId = parseInt(id)
 
-  const [recipeRows, ingredientRows, ingredientOptions] = await Promise.all([
+  const [recipeRows, ingredientRows, ingredientOptions, recipesForCopy] = await Promise.all([
     db.select().from(recipes).where(eq(recipes.id, recipeId)).limit(1),
     db
       .select({
@@ -25,6 +26,7 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
       .select({ id: ingredients.id, name: ingredients.name, baseUnit: ingredients.baseUnit })
       .from(ingredients)
       .orderBy(asc(ingredients.name)),
+    getRecipesForCopy(recipeId),
   ])
 
   if (recipeRows.length === 0) notFound()
@@ -39,6 +41,7 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
       </div>
       <RecipeForm
         ingredientOptions={ingredientOptions}
+        recipesForCopy={recipesForCopy}
         recipe={recipe}
         existingIngredients={ingredientRows}
       />

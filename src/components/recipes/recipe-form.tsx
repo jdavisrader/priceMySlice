@@ -2,16 +2,24 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { Plus, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { buttonVariants } from '@/components/ui/button'
 import Link from 'next/link'
 import { RecipeIngredientRow, type IngredientOption, type RowData } from './recipe-ingredient-row'
 import { SectionBlock } from './section-block'
-import { createRecipe, updateRecipe } from '@/server/actions/recipes'
+import { CopyFromRecipeModal } from './copy-from-recipe-modal'
+import { createRecipe, updateRecipe, type RecipeForCopy } from '@/server/actions/recipes'
 
 type SectionData = { uid: string; name: string }
 
@@ -25,11 +33,12 @@ type ExistingIngredient = {
 
 type Props = {
   ingredientOptions: IngredientOption[]
+  recipesForCopy: RecipeForCopy[]
   recipe?: { id: number; name: string; description: string | null; servings: number; notes: string | null }
   existingIngredients?: ExistingIngredient[]
 }
 
-export function RecipeForm({ ingredientOptions, recipe, existingIngredients }: Props) {
+export function RecipeForm({ ingredientOptions, recipesForCopy, recipe, existingIngredients }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [name, setName] = useState(recipe?.name ?? '')
@@ -62,6 +71,13 @@ export function RecipeForm({ ingredientOptions, recipe, existingIngredients }: P
         section: ei.section ?? null,
       })) ?? []
   )
+
+  const [copyModalOpen, setCopyModalOpen] = useState(false)
+
+  function handleCopySection(sectionName: string, rows: RowData[]) {
+    setSections((prev) => [...prev, { uid: crypto.randomUUID(), name: sectionName }])
+    setRows((prev) => [...prev, ...rows])
+  }
 
   function updateRow(uid: string, updated: RowData) {
     setRows((prev) => prev.map((r) => (r.uid === uid ? updated : r)))
@@ -220,10 +236,29 @@ export function RecipeForm({ ingredientOptions, recipe, existingIngredients }: P
               />
             ))}
 
-            <Button type="button" variant="outline" size="sm" onClick={addSection}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add section
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+                <Plus className="h-4 w-4" />
+                Add section
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={addSection}>New section</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setCopyModalOpen(true)}
+                  disabled={recipesForCopy.length === 0}
+                >
+                  Copy from recipe
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <CopyFromRecipeModal
+              open={copyModalOpen}
+              onOpenChange={setCopyModalOpen}
+              recipes={recipesForCopy}
+              onCopy={handleCopySection}
+            />
           </>
         )}
       </div>
