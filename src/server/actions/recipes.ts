@@ -2,8 +2,53 @@
 
 import { db } from '@/db'
 import { recipes, recipeIngredients } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, asc, isNotNull } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+
+export type RecipeForCopy = {
+  id: number
+  name: string
+  sections: {
+    name: string
+    ingredients: { ingredientId: number; quantity: string; unit: string }[]
+  }[]
+}
+
+export async function getRecipesForCopy(excludeId?: number): Promise<RecipeForCopy[]> {
+  const rows = await db
+    .select({
+      recipeId: recipes.id,
+      recipeName: recipes.name,
+      ingredientId: recipeIngredients.ingredientId,
+      quantity: recipeIngredients.quantity,
+      unit: recipeIngredients.unit,
+      section: recipeIngredients.section,
+      sortOrder: recipeIngredients.sortOrder,
+    })
+    .from(recipes)
+    .innerJoin(recipeIngredients, eq(recipeIngredients.recipeId, recipes.id))
+    .where(isNotNull(recipeIngredients.section))
+    .orderBy(asc(recipes.name), asc(recipeIngredients.sortOrder))
+
+  const filtered = excludeId ? rows.filter((r) => r.recipeId !== excludeId) : rows
+
+  const recipeMap = new Map<number, RecipeForCopy>()
+  for (const row of filtered) {
+    if (!recipeMap.has(row.recipeId)) {
+      recipeMap.set(row.recipeId, { id: row.recipeId, name: row.recipeName, sections: [] })
+    }
+    const recipe = recipeMap.get(row.recipeId)!
+    const sectionName = row.section!
+    let section = recipe.sections.find((s) => s.name === sectionName)
+    if (!section) {
+      section = { name: sectionName, ingredients: [] }
+      recipe.sections.push(section)
+    }
+    section.ingredients.push({ ingredientId: row.ingredientId, quantity: row.quantity, unit: row.unit })
+  }
+
+  return Array.from(recipeMap.values())
+}
 
 type RecipeIngredientInput = {
   ingredientId: number
