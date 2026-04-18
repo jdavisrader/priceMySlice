@@ -2,7 +2,7 @@
 
 import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { FractionInput } from '@/components/ui/fraction-input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { UNITS } from '@/lib/units'
 import { getDensity } from '@/lib/densities'
@@ -61,13 +61,10 @@ export function RecipeIngredientRow({ row, ingredientOptions, onChange, onRemove
         </SelectContent>
       </Select>
 
-      <Input
-        type="number"
-        min="0"
-        step="any"
-        placeholder="Qty"
+      <FractionInput
         value={row.quantity}
-        onChange={(e) => onChange({ ...row, quantity: e.target.value })}
+        unit={row.unit}
+        onChange={(num) => onChange({ ...row, quantity: num.toString() })}
         className="w-24"
       />
 

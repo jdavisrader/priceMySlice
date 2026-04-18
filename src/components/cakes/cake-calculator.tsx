@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { convertToBaseUnitsWithDensity, needsCrossDimension } from '@/lib/units'
+import { formatQuantity } from '@/lib/fractions'
 import { getDensity } from '@/lib/densities'
 import { saveCake } from '@/server/actions/cakes'
 
@@ -128,7 +129,7 @@ export function CakeCalculator({ recipeOptions }: { recipeOptions: RecipeOption[
             <p className="text-sm font-medium mb-3">Ingredient cost</p>
             <div className="divide-y rounded-md border bg-white text-sm">
               {lineItems.map((item, i) => {
-                const qtyLabel = `${item.scaledQty % 1 === 0 ? item.scaledQty : item.scaledQty.toFixed(2)} ${item.unit}`
+                const qtyLabel = `${formatQuantity(item.scaledQty, item.unit)} ${item.unit}`
                 const priceLabel = item.conversionError ? 'No density data' : `$${item.lineTotal.toFixed(2)}`
                 return (
                 <div key={i} className="flex items-center gap-3 px-3 py-2">
