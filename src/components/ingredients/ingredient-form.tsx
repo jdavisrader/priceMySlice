@@ -15,11 +15,12 @@ type Ingredient = InferSelectModel<typeof ingredients>
 
 type Props = {
   ingredient?: Ingredient
+  existingIngredients?: Ingredient[]
   onSuccess: () => void
   onCancel: () => void
 }
 
-export function IngredientForm({ ingredient, onSuccess, onCancel }: Props) {
+export function IngredientForm({ ingredient, existingIngredients = [], onSuccess, onCancel }: Props) {
   const [isPending, startTransition] = useTransition()
   const [name, setName] = useState(ingredient?.name ?? '')
   const [price, setPrice] = useState(ingredient ? parseFloat(ingredient.purchasePrice).toString() : '')
@@ -35,6 +36,20 @@ export function IngredientForm({ ingredient, onSuccess, onCancel }: Props) {
       preview = computePricePerBaseUnit(priceNum, qtyNum, unit)
     } catch {}
   }
+
+  const trimmedName = name.trim()
+  const suggestions = trimmedName.length >= 2
+    ? existingIngredients
+        .filter((i) => {
+          if (ingredient && i.id === ingredient.id) return false
+          return i.name.toLowerCase().includes(trimmedName.toLowerCase())
+        })
+        .slice(0, 4)
+    : []
+  const exactMatch = existingIngredients.some((i) => {
+    if (ingredient && i.id === ingredient.id) return false
+    return i.name.toLowerCase() === trimmedName.toLowerCase()
+  })
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -66,6 +81,22 @@ export function IngredientForm({ ingredient, onSuccess, onCancel }: Props) {
           placeholder="e.g. All-purpose flour"
           required
         />
+        {suggestions.length > 0 && (
+          <div className="rounded-md border bg-zinc-50 px-3 py-2">
+            <p className="text-xs text-muted-foreground mb-1">Already have:</p>
+            <ul className="space-y-0.5">
+              {suggestions.map((s) => (
+                <li key={s.id} className="text-sm text-zinc-700">
+                  {s.name}
+                  {s.notes && <span className="text-xs text-muted-foreground ml-1">— {s.notes}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {exactMatch && (
+          <p className="text-xs text-amber-600">An ingredient with this name already exists.</p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
