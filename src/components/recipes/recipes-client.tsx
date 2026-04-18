@@ -78,7 +78,9 @@ export function RecipesClient({ recipes, ingredientCounts }: Props) {
               {recipes.map((recipe) => (
                 <TableRow key={recipe.id}>
                   <TableCell>
-                    <div className="font-medium">{recipe.name}</div>
+                    <Link href={`/recipes/${recipe.id}`} className="font-medium hover:underline">
+                      {recipe.name}
+                    </Link>
                     {recipe.description && (
                       <div className="text-sm text-muted-foreground truncate max-w-xs">
                         {recipe.description}
@@ -93,7 +95,7 @@ export function RecipesClient({ recipes, ingredientCounts }: Props) {
                   <TableCell>
                     <div className="flex gap-1 justify-end">
                       <Link
-                        href={`/recipes/${recipe.id}`}
+                        href={`/recipes/${recipe.id}/edit`}
                         className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }))}
                       >
                         <Pencil className="h-4 w-4" />
