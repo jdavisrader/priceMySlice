@@ -14,9 +14,11 @@ type Props = {
   ingredientTotal: number
   salesTaxAmount?: number
   salesTaxPct?: number
+  sectionScales?: Record<string, string>
+  onSectionScaleChange?: (section: string, value: string) => void
 }
 
-export function IngredientCostTable({ lineItems, ingredientTotal, salesTaxAmount, salesTaxPct }: Props) {
+export function IngredientCostTable({ lineItems, ingredientTotal, salesTaxAmount, salesTaxPct, sectionScales, onSectionScaleChange }: Props) {
   const unsectioned = lineItems.filter((i) => !i.section)
   const sectionNames = [...new Set(lineItems.filter((i) => i.section).map((i) => i.section!))]
 
@@ -40,8 +42,22 @@ export function IngredientCostTable({ lineItems, ingredientTotal, salesTaxAmount
       {unsectioned.map((item, i) => renderRow(item, `u-${i}`))}
       {sectionNames.map((sectionName) => (
         <div key={sectionName}>
-          <div className="px-3 py-1.5 bg-zinc-50 text-xs font-medium text-muted-foreground">
-            {sectionName}
+          <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-50">
+            <span className="text-xs font-medium text-muted-foreground">{sectionName}</span>
+            {onSectionScaleChange && (
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-muted-foreground">Scale</span>
+                <input
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  value={sectionScales?.[sectionName] ?? '1'}
+                  onChange={(e) => onSectionScaleChange(sectionName, e.target.value)}
+                  className="w-16 text-right text-xs border rounded px-1.5 py-0.5 bg-white"
+                />
+                <span className="text-xs text-muted-foreground">×</span>
+              </div>
+            )}
           </div>
           {lineItems.filter((i) => i.section === sectionName).map((item, i) =>
             renderRow(item, `${sectionName}-${i}`)
