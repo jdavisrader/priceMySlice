@@ -52,6 +52,8 @@ export const cakes = pgTable('cakes', {
   servings: integer('servings').notNull().default(1),
   laborCost: numeric('labor_cost', { precision: 10, scale: 2 }).notNull().default('0'),
   packagingCost: numeric('packaging_cost', { precision: 10, scale: 2 }).notNull().default('0'),
+  suppliesCost: numeric('supplies_cost', { precision: 10, scale: 2 }).notNull().default('0'),
+  salesTaxRate: numeric('sales_tax_rate', { precision: 5, scale: 4 }).notNull().default('0'),
   totalIngredientCost: numeric('total_ingredient_cost', { precision: 10, scale: 2 }).notNull(),
   totalCost: numeric('total_cost', { precision: 10, scale: 2 }).notNull(),
   markupMultiplier: numeric('markup_multiplier', { precision: 5, scale: 2 }).notNull().default('3'),
@@ -59,6 +61,12 @@ export const cakes = pgTable('cakes', {
   finalPrice: numeric('final_price', { precision: 10, scale: 2 }),
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+export const appSettings = pgTable('app_settings', {
+  id: serial('id').primaryKey(),
+  defaultSalesTaxRate: numeric('default_sales_tax_rate', { precision: 5, scale: 4 }).notNull().default('0'),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
 export const cakeIngredientSnapshots = pgTable('cake_ingredient_snapshots', {

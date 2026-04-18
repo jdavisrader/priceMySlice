@@ -21,6 +21,8 @@ type SaveCakeInput = {
   servings: number
   laborCost: number
   packagingCost: number
+  suppliesCost: number
+  salesTaxRate: number
   totalIngredientCost: number
   totalCost: number
   markupMultiplier: number
@@ -39,6 +41,8 @@ export async function saveCake(data: SaveCakeInput): Promise<number> {
       servings: data.servings,
       laborCost: data.laborCost.toFixed(2),
       packagingCost: data.packagingCost.toFixed(2),
+      suppliesCost: data.suppliesCost.toFixed(2),
+      salesTaxRate: data.salesTaxRate.toFixed(4),
       totalIngredientCost: data.totalIngredientCost.toFixed(4),
       totalCost: data.totalCost.toFixed(4),
       markupMultiplier: data.markupMultiplier.toString(),
