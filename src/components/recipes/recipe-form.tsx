@@ -31,25 +31,41 @@ type ExistingIngredient = {
   sortOrder: number
 }
 
+type InitialValues = {
+  name: string
+  description: string | null
+  servings: number
+  notes: string | null
+  ingredients: ExistingIngredient[]
+}
+
 type Props = {
   ingredientOptions: IngredientOption[]
   recipesForCopy: RecipeForCopy[]
   recipe?: { id: number; name: string; description: string | null; servings: number; notes: string | null }
   existingIngredients?: ExistingIngredient[]
+  initialValues?: InitialValues
 }
 
-export function RecipeForm({ ingredientOptions, recipesForCopy, recipe, existingIngredients }: Props) {
+export function RecipeForm({ ingredientOptions, recipesForCopy, recipe, existingIngredients, initialValues }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [name, setName] = useState(recipe?.name ?? '')
-  const [description, setDescription] = useState(recipe?.description ?? '')
-  const [servings, setServings] = useState(recipe?.servings?.toString() ?? '1')
-  const [notes, setNotes] = useState(recipe?.notes ?? '')
+
+  const sourceIngredients = existingIngredients ?? initialValues?.ingredients
+
+  const [name, setName] = useState(() => {
+    if (recipe) return recipe.name
+    if (initialValues) return `Copy of ${initialValues.name}`
+    return ''
+  })
+  const [description, setDescription] = useState(recipe?.description ?? initialValues?.description ?? '')
+  const [servings, setServings] = useState((recipe?.servings ?? initialValues?.servings)?.toString() ?? '1')
+  const [notes, setNotes] = useState(recipe?.notes ?? initialValues?.notes ?? '')
 
   const [sections, setSections] = useState<SectionData[]>(() => {
-    if (!existingIngredients) return []
+    if (!sourceIngredients) return []
     const seen = new Map<string, SectionData>()
-    ;[...existingIngredients]
+    ;[...sourceIngredients]
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .forEach((ei) => {
         if (ei.section && !seen.has(ei.section)) {
@@ -60,7 +76,7 @@ export function RecipeForm({ ingredientOptions, recipesForCopy, recipe, existing
   })
 
   const [rows, setRows] = useState<RowData[]>(
-    existingIngredients
+    sourceIngredients
       ?.slice()
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((ei) => ({

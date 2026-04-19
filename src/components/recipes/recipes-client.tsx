@@ -2,11 +2,18 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { InferSelectModel } from 'drizzle-orm'
 import type { recipes } from '@/db/schema'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, ChevronDown } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +26,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { deleteRecipe } from '@/server/actions/recipes'
+import { CopyRecipeSelectorModal } from './copy-recipe-selector-modal'
 
 type Recipe = InferSelectModel<typeof recipes>
 
@@ -28,8 +36,10 @@ type Props = {
 }
 
 export function RecipesClient({ recipes, ingredientCounts }: Props) {
+  const router = useRouter()
   const [deleteTarget, setDeleteTarget] = useState<Recipe | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [copyModalOpen, setCopyModalOpen] = useState(false)
 
   function handleDeleteConfirm() {
     if (!deleteTarget) return
@@ -46,10 +56,31 @@ export function RecipesClient({ recipes, ingredientCounts }: Props) {
           <h2 className="text-2xl font-semibold tracking-tight">Recipes</h2>
           <p className="text-sm text-muted-foreground mt-1">Store and manage your cake recipes.</p>
         </div>
-        <Link href="/recipes/new" className={cn(buttonVariants())}>
-          <Plus className="h-4 w-4 mr-2" />
-          New recipe
-        </Link>
+        <DropdownMenu>
+          <DropdownMenuTrigger className={cn(buttonVariants())}>
+            <Plus className="h-4 w-4 mr-2" />
+            New recipe
+            <ChevronDown className="h-3.5 w-3.5 ml-1 text-white/70" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => router.push('/recipes/new')}>
+              From scratch
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setCopyModalOpen(true)}
+              disabled={recipes.length === 0}
+            >
+              Copy existing recipe
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <CopyRecipeSelectorModal
+          open={copyModalOpen}
+          onOpenChange={setCopyModalOpen}
+          recipes={recipes.map((r) => ({ id: r.id, name: r.name }))}
+          onSelect={(id) => router.push(`/recipes/new?copyFrom=${id}`)}
+        />
       </div>
 
       {recipes.length === 0 ? (
