@@ -17,7 +17,7 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-56 shrink-0 border-r bg-white min-h-screen flex flex-col">
+    <aside className="w-56 shrink-0 border-r bg-white hidden md:flex flex-col">
       <div className="p-6 border-b">
         <h1 className="text-base font-semibold tracking-tight">priceMySlice</h1>
         <p className="text-xs text-muted-foreground mt-0.5">Cake cost calculator</p>

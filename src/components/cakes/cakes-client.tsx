@@ -37,7 +37,7 @@ export function CakesClient({ cakes }: { cakes: CakeRow[] }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Cake History</h2>
           <p className="text-sm text-muted-foreground mt-1">View past cake pricing calculations.</p>
@@ -56,16 +56,16 @@ export function CakesClient({ cakes }: { cakes: CakeRow[] }) {
           </Link>
         </div>
       ) : (
-        <div className="rounded-lg border bg-white">
+        <div className="rounded-lg border bg-white overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Recipe</TableHead>
-                <TableHead>Servings</TableHead>
+                <TableHead className="hidden sm:table-cell">Recipe</TableHead>
+                <TableHead className="hidden sm:table-cell">Servings</TableHead>
                 <TableHead>Total cost</TableHead>
                 <TableHead>Final price</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead className="hidden sm:table-cell">Date</TableHead>
                 <TableHead className="w-16" />
               </TableRow>
             </TableHeader>
@@ -77,13 +77,13 @@ export function CakesClient({ cakes }: { cakes: CakeRow[] }) {
                       {cake.name}
                     </Link>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{cake.recipeName ?? '—'}</TableCell>
-                  <TableCell>{cake.servings}</TableCell>
+                  <TableCell className="hidden sm:table-cell text-muted-foreground">{cake.recipeName ?? '—'}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{cake.servings}</TableCell>
                   <TableCell>${parseFloat(cake.totalCost).toFixed(2)}</TableCell>
                   <TableCell className="font-medium">
                     ${parseFloat(cake.finalPrice ?? cake.suggestedPrice).toFixed(2)}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
                     {new Date(cake.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>

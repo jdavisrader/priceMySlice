@@ -51,7 +51,7 @@ export function RecipesClient({ recipes, ingredientCounts }: Props) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Recipes</h2>
           <p className="text-sm text-muted-foreground mt-1">Store and manage your cake recipes.</p>
@@ -94,14 +94,14 @@ export function RecipesClient({ recipes, ingredientCounts }: Props) {
           </Link>
         </div>
       ) : (
-        <div className="rounded-lg border bg-white">
+        <div className="rounded-lg border bg-white overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Servings</TableHead>
                 <TableHead>Ingredients</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead className="hidden sm:table-cell">Created</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
@@ -120,7 +120,7 @@ export function RecipesClient({ recipes, ingredientCounts }: Props) {
                   </TableCell>
                   <TableCell>{recipe.servings}</TableCell>
                   <TableCell>{ingredientCounts[recipe.id] ?? 0}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
                     {new Date(recipe.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
