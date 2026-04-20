@@ -13,7 +13,7 @@ export default async function NewRecipePage({
 
   const [ingredientOptions, recipesForCopy] = await Promise.all([
     db
-      .select({ id: ingredients.id, name: ingredients.name, baseUnit: ingredients.baseUnit })
+      .select({ id: ingredients.id, name: ingredients.name, baseUnit: ingredients.baseUnit, gPerMl: ingredients.gPerMl })
       .from(ingredients)
       .orderBy(asc(ingredients.name)),
     getRecipesForCopy(),

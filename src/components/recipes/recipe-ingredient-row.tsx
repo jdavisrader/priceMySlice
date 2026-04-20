@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button'
 import { FractionInput } from '@/components/ui/fraction-input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { UNITS } from '@/lib/units'
-import { getDensity } from '@/lib/densities'
+import { resolveIngredientDensity } from '@/lib/densities'
 
 export type IngredientOption = {
   id: number
   name: string
   baseUnit: string
+  gPerMl: string | null
 }
 
 export type RowData = {
@@ -31,7 +32,7 @@ type Props = {
 export function RecipeIngredientRow({ row, ingredientOptions, onChange, onRemove }: Props) {
   const selected = ingredientOptions.find((i) => i.id.toString() === row.ingredientId)
 
-  const hasDensity = selected ? getDensity(selected.name) !== null : false
+  const hasDensity = selected ? resolveIngredientDensity({ name: selected.name, gPerMl: selected.gPerMl }) !== null : false
 
   const compatibleUnits = selected
     ? UNITS.filter((u) => {

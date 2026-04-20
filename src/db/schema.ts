@@ -17,6 +17,7 @@ export const ingredients = pgTable('ingredients', {
   pricePerBaseUnit: numeric('price_per_base_unit', { precision: 12, scale: 8 }).notNull(),
   baseUnit: varchar('base_unit', { length: 50 }).notNull(),
   notes: text('notes'),
+  gPerMl: numeric('g_per_ml', { precision: 8, scale: 4 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

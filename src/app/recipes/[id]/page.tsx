@@ -4,7 +4,7 @@ import { recipes, recipeIngredients, ingredients } from '@/db/schema'
 import { eq, asc } from 'drizzle-orm'
 import { RecipeDetail } from '@/components/recipes/recipe-detail'
 import { convertToBaseUnitsWithDensity, needsCrossDimension } from '@/lib/units'
-import { getDensity } from '@/lib/densities'
+import { resolveIngredientDensity } from '@/lib/densities'
 
 export default async function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -15,6 +15,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
     db
       .select({
         ingredientName: ingredients.name,
+        gPerMl: ingredients.gPerMl,
         quantity: recipeIngredients.quantity,
         unit: recipeIngredients.unit,
         section: recipeIngredients.section,
@@ -37,7 +38,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
     const qty = parseFloat(row.quantity)
     const pricePerBase = parseFloat(row.pricePerBaseUnit)
     const crossDim = needsCrossDimension(row.unit, row.baseUnit)
-    const density = crossDim ? getDensity(row.ingredientName) : null
+    const density = crossDim ? resolveIngredientDensity({ name: row.ingredientName, gPerMl: row.gPerMl }) : null
     const conversionError = crossDim && density === null
 
     let lineTotal = 0

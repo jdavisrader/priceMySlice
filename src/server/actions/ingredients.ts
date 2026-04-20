@@ -12,6 +12,7 @@ type IngredientInput = {
   purchaseQuantity: number
   purchaseUnit: string
   notes?: string
+  gPerMl?: number | null
 }
 
 export async function createIngredient(data: IngredientInput) {
@@ -29,6 +30,7 @@ export async function createIngredient(data: IngredientInput) {
     pricePerBaseUnit: pricePerBaseUnit.toString(),
     baseUnit,
     notes: data.notes ?? null,
+    gPerMl: data.gPerMl != null ? data.gPerMl.toString() : null,
   })
 
   revalidatePath('/ingredients')
@@ -51,6 +53,7 @@ export async function updateIngredient(id: number, data: IngredientInput) {
       pricePerBaseUnit: pricePerBaseUnit.toString(),
       baseUnit,
       notes: data.notes ?? null,
+      gPerMl: data.gPerMl != null ? data.gPerMl.toString() : null,
       updatedAt: new Date(),
     })
     .where(eq(ingredients.id, id))

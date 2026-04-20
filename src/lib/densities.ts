@@ -97,3 +97,14 @@ export function getDensity(ingredientName: string): number | null {
   }
   return null
 }
+
+export function resolveIngredientDensity(ingredient: {
+  name: string
+  gPerMl: string | null
+}): number | null {
+  if (ingredient.gPerMl !== null) {
+    const parsed = parseFloat(ingredient.gPerMl)
+    if (!isNaN(parsed) && parsed > 0) return parsed
+  }
+  return getDensity(ingredient.name)
+}
