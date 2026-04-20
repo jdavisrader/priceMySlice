@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import type { InferSelectModel } from 'drizzle-orm'
 import type { ingredients } from '@/db/schema'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,9 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { UNITS, computePricePerBaseUnit, formatPricePerUnit } from '@/lib/units'
+import { getDensity } from '@/lib/densities'
 import { createIngredient, updateIngredient } from '@/server/actions/ingredients'
+import { DensityField } from './density-field'
 
 type Ingredient = InferSelectModel<typeof ingredients>
 
@@ -27,6 +29,18 @@ export function IngredientForm({ ingredient, existingIngredients = [], onSuccess
   const [quantity, setQuantity] = useState(ingredient ? parseFloat(ingredient.purchaseQuantity).toString() : '')
   const [unit, setUnit] = useState(ingredient?.purchaseUnit ?? '')
   const [notes, setNotes] = useState(ingredient?.notes ?? '')
+  const [gPerMl, setGPerMl] = useState<string>(() => {
+    if (ingredient?.gPerMl != null) return parseFloat(ingredient.gPerMl).toString()
+    const lib = getDensity(ingredient?.name ?? '')
+    return lib !== null ? lib.toString() : ''
+  })
+  const gPerMlUserEditedRef = useRef(ingredient?.gPerMl != null)
+
+  useEffect(() => {
+    if (gPerMlUserEditedRef.current) return
+    const lib = getDensity(name)
+    setGPerMl(lib !== null ? lib.toString() : '')
+  }, [name])
 
   const priceNum = parseFloat(price)
   const qtyNum = parseFloat(quantity)
@@ -60,6 +74,7 @@ export function IngredientForm({ ingredient, existingIngredients = [], onSuccess
         purchaseQuantity: qtyNum,
         purchaseUnit: unit,
         notes: notes || undefined,
+        gPerMl: gPerMl !== '' ? parseFloat(gPerMl) : null,
       }
       if (ingredient) {
         await updateIngredient(ingredient.id, data)
@@ -98,6 +113,14 @@ export function IngredientForm({ ingredient, existingIngredients = [], onSuccess
           <p className="text-xs text-amber-600">An ingredient with this name already exists.</p>
         )}
       </div>
+
+      <DensityField
+        value={gPerMl}
+        onChange={(v) => {
+          gPerMlUserEditedRef.current = true
+          setGPerMl(v)
+        }}
+      />
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">

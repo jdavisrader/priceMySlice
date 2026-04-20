@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { convertToBaseUnitsWithDensity, needsCrossDimension } from '@/lib/units'
-import { getDensity } from '@/lib/densities'
+import { resolveIngredientDensity } from '@/lib/densities'
 import { saveCake } from '@/server/actions/cakes'
 import { updateDefaultSalesTaxRate } from '@/server/actions/settings'
 import { IngredientCostTable } from './ingredient-cost-table'
@@ -20,6 +20,7 @@ export type RecipeOption = {
   servings: number
   ingredients: {
     ingredientName: string
+    gPerMl: string | null
     quantity: string
     unit: string
     pricePerBaseUnit: string
@@ -52,7 +53,7 @@ export function CakeCalculator({ recipeOptions, defaultSalesTaxRate }: { recipeO
     const sectionScale = parseFloat(sectionScales[ing.section ?? ''] || '1') || 1
     const scaledQty = parseFloat(ing.quantity) * scaleFactor * sectionScale
     const isCrossDimension = needsCrossDimension(ing.unit, ing.baseUnit)
-    const density = isCrossDimension ? getDensity(ing.ingredientName) : null
+    const density = isCrossDimension ? resolveIngredientDensity({ name: ing.ingredientName, gPerMl: ing.gPerMl }) : null
     try {
       const baseQty = convertToBaseUnitsWithDensity(scaledQty, ing.unit, ing.baseUnit, density)
       const lineTotal = baseQty * parseFloat(ing.pricePerBaseUnit)

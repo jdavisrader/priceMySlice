@@ -17,6 +17,7 @@ export default async function NewCakePage() {
     .select({
       recipeId: recipeIngredients.recipeId,
       ingredientName: ingredients.name,
+      gPerMl: ingredients.gPerMl,
       quantity: recipeIngredients.quantity,
       unit: recipeIngredients.unit,
       pricePerBaseUnit: ingredients.pricePerBaseUnit,
