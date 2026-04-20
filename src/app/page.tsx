@@ -40,7 +40,7 @@ export default async function DashboardPage() {
         <p className="text-sm text-muted-foreground mt-1">Welcome back. Here&apos;s your overview.</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         {stats.map(({ label, value, icon: Icon, href }) => (
           <Link key={label} href={href}>
             <Card className="hover:ring-foreground/20 transition-shadow cursor-pointer">

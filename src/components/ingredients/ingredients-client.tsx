@@ -64,7 +64,7 @@ export function IngredientsClient({ ingredients }: { ingredients: Ingredient[] }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Ingredients</h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -97,15 +97,15 @@ export function IngredientsClient({ ingredients }: { ingredients: Ingredient[] }
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border bg-white">
+        <div className="rounded-lg border bg-white overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Package size</TableHead>
+                <TableHead className="hidden sm:table-cell">Package size</TableHead>
                 <TableHead>Purchase price</TableHead>
                 <TableHead>Cost per unit</TableHead>
-                <TableHead>Updated</TableHead>
+                <TableHead className="hidden sm:table-cell">Updated</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
@@ -118,14 +118,14 @@ export function IngredientsClient({ ingredients }: { ingredients: Ingredient[] }
                       <p className="text-xs text-muted-foreground font-normal mt-0.5">{ingredient.notes}</p>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     {parseFloat(ingredient.purchaseQuantity).toString()} {ingredient.purchaseUnit}
                   </TableCell>
                   <TableCell>${parseFloat(ingredient.purchasePrice).toFixed(2)}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {formatPricePerUnit(parseFloat(ingredient.pricePerBaseUnit), ingredient.baseUnit)}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
                     {new Date(ingredient.updatedAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
