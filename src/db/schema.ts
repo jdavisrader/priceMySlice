@@ -42,7 +42,7 @@ export const recipeIngredients = pgTable('recipe_ingredients', {
     .references(() => ingredients.id),
   quantity: numeric('quantity', { precision: 10, scale: 4 }).notNull(),
   unit: varchar('unit', { length: 50 }).notNull(),
-  section: varchar('section', { length: 100 }),
+  section: varchar('section', { length: 100 }).notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
 })
 

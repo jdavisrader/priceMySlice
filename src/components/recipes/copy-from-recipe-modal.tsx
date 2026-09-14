@@ -5,13 +5,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { RecipeForCopy } from '@/server/actions/recipes'
-import type { RowData } from './recipe-ingredient-row'
+
+export type CopiedIngredient = { ingredientId: string; quantity: string; unit: string }
 
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
   recipes: RecipeForCopy[]
-  onCopy: (sectionName: string, rows: RowData[]) => void
+  onCopy: (sectionName: string, ingredients: CopiedIngredient[]) => void
 }
 
 export function CopyFromRecipeModal({ open, onOpenChange, recipes, onCopy }: Props) {
@@ -29,14 +30,12 @@ export function CopyFromRecipeModal({ open, onOpenChange, recipes, onCopy }: Pro
     if (!selectedRecipe || !selectedSection) return
     const section = selectedRecipe.sections.find((s) => s.name === selectedSection)
     if (!section) return
-    const rows: RowData[] = section.ingredients.map((ing) => ({
-      uid: crypto.randomUUID(),
+    const ingredients: CopiedIngredient[] = section.ingredients.map((ing) => ({
       ingredientId: ing.ingredientId.toString(),
       quantity: parseFloat(ing.quantity).toString(),
       unit: ing.unit,
-      section: selectedSection,
     }))
-    onCopy(selectedSection, rows)
+    onCopy(selectedSection, ingredients)
     setSelectedRecipeId('')
     setSelectedSection('')
     onOpenChange(false)
