@@ -16,18 +16,18 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { buttonVariants } from '@/components/ui/button'
 import Link from 'next/link'
-import { RecipeIngredientRow, type IngredientOption, type RowData } from './recipe-ingredient-row'
+import { type IngredientOption } from './recipe-ingredient-row'
 import { SectionBlock } from './section-block'
 import { CopyFromRecipeModal } from './copy-from-recipe-modal'
+import { useRecipeSections, toOrderedIngredients } from './use-recipe-sections'
+import { validateSections } from '@/lib/recipe-validation'
 import { createRecipe, updateRecipe, type RecipeForCopy } from '@/server/actions/recipes'
-
-type SectionData = { uid: string; name: string }
 
 type ExistingIngredient = {
   ingredientId: number
   quantity: string
   unit: string
-  section: string | null
+  section: string
   sortOrder: number
 }
 
@@ -62,91 +62,35 @@ export function RecipeForm({ ingredientOptions, recipesForCopy, recipe, existing
   const [servings, setServings] = useState((recipe?.servings ?? initialValues?.servings)?.toString() ?? '1')
   const [notes, setNotes] = useState(recipe?.notes ?? initialValues?.notes ?? '')
 
-  const [sections, setSections] = useState<SectionData[]>(() => {
-    if (!sourceIngredients) return []
-    const seen = new Map<string, SectionData>()
-    ;[...sourceIngredients]
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .forEach((ei) => {
-        if (ei.section && !seen.has(ei.section)) {
-          seen.set(ei.section, { uid: crypto.randomUUID(), name: ei.section })
-        }
-      })
-    return Array.from(seen.values())
-  })
-
-  const [rows, setRows] = useState<RowData[]>(
-    sourceIngredients
-      ?.slice()
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((ei) => ({
-        uid: crypto.randomUUID(),
-        ingredientId: ei.ingredientId.toString(),
-        quantity: parseFloat(ei.quantity).toString(),
-        unit: ei.unit,
-        section: ei.section ?? null,
-      })) ?? []
-  )
+  const {
+    sections,
+    rows,
+    addSection,
+    addCopiedSection,
+    updateSectionName,
+    removeSection,
+    addRow,
+    updateRow,
+    removeRow,
+  } = useRecipeSections(sourceIngredients)
 
   const [copyModalOpen, setCopyModalOpen] = useState(false)
-
-  function handleCopySection(sectionName: string, rows: RowData[]) {
-    setSections((prev) => [...prev, { uid: crypto.randomUUID(), name: sectionName }])
-    setRows((prev) => [...prev, ...rows])
-  }
-
-  function updateRow(uid: string, updated: RowData) {
-    setRows((prev) => prev.map((r) => (r.uid === uid ? updated : r)))
-  }
-
-  function removeRow(uid: string) {
-    setRows((prev) => prev.filter((r) => r.uid !== uid))
-  }
-
-  function addRowToSection(sectionName: string | null) {
-    setRows((prev) => [...prev, { uid: crypto.randomUUID(), ingredientId: '', quantity: '', unit: '', section: sectionName }])
-  }
-
-  function addSection() {
-    setSections((prev) => [...prev, { uid: crypto.randomUUID(), name: 'New section' }])
-  }
-
-  function updateSectionName(uid: string, newName: string) {
-    const section = sections.find((s) => s.uid === uid)
-    if (!section) return
-    const oldName = section.name
-    setSections((prev) => prev.map((s) => (s.uid === uid ? { ...s, name: newName } : s)))
-    setRows((prev) => prev.map((r) => (r.section === oldName ? { ...r, section: newName } : r)))
-  }
-
-  function removeSection(uid: string) {
-    const section = sections.find((s) => s.uid === uid)
-    if (!section) return
-    setSections((prev) => prev.filter((s) => s.uid !== uid))
-    setRows((prev) => prev.filter((r) => r.section !== section.name))
-  }
+  const [error, setError] = useState<string | null>(null)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const unsectionedRows = rows.filter((r) => r.section === null)
-    const allRows: RowData[] = [...unsectionedRows]
-    sections.forEach((s) => {
-      allRows.push(...rows.filter((r) => r.section === s.name))
-    })
-    const validRows = allRows.filter((r) => r.ingredientId && r.quantity && r.unit)
+
+    const problem = validateSections(sections, rows)
+    setError(problem)
+    if (problem) return
+
     startTransition(async () => {
       const data = {
         name,
         description: description || undefined,
         servings: parseInt(servings),
         notes: notes || undefined,
-        ingredients: validRows.map((r, idx) => ({
-          ingredientId: parseInt(r.ingredientId),
-          quantity: parseFloat(r.quantity),
-          unit: r.unit,
-          section: r.section ?? null,
-          sortOrder: idx,
-        })),
+        ingredients: toOrderedIngredients(sections, rows),
       }
       if (recipe) {
         await updateRecipe(recipe.id, data)
@@ -157,8 +101,6 @@ export function RecipeForm({ ingredientOptions, recipesForCopy, recipe, existing
       }
     })
   }
-
-  const unsectionedRows = rows.filter((r) => r.section === null)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 max-w-2xl">
@@ -210,7 +152,14 @@ export function RecipeForm({ ingredientOptions, recipesForCopy, recipe, existing
       <Separator />
 
       <div className="space-y-3">
-        <Label>Ingredients</Label>
+        <div className="space-y-1">
+          <Label>Ingredients</Label>
+          <p className="text-xs text-muted-foreground">
+            Ingredients live in sections — like &ldquo;Chocolate Cake&rdquo; or &ldquo;Buttercream&rdquo; — so you can
+            reuse a section when pricing a cake.
+          </p>
+        </div>
+
         {ingredientOptions.length === 0 ? (
           <div className="rounded-md border border-dashed px-4 py-5 text-sm text-muted-foreground">
             No ingredients in your library yet.{' '}
@@ -221,32 +170,21 @@ export function RecipeForm({ ingredientOptions, recipesForCopy, recipe, existing
           </div>
         ) : (
           <>
-            {unsectionedRows.length === 0 && sections.length === 0 && (
-              <p className="text-sm text-muted-foreground">No ingredients added yet.</p>
+            {sections.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No sections yet. Add a section to start building this recipe.
+              </p>
             )}
-            {unsectionedRows.map((row) => (
-              <RecipeIngredientRow
-                key={row.uid}
-                row={row}
-                ingredientOptions={ingredientOptions}
-                onChange={(updated) => updateRow(row.uid, updated)}
-                onRemove={() => removeRow(row.uid)}
-              />
-            ))}
-            <Button type="button" variant="outline" size="sm" onClick={() => addRowToSection(null)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add ingredient
-            </Button>
 
             {sections.map((section) => (
               <SectionBlock
                 key={section.uid}
                 section={section}
-                rows={rows.filter((r) => r.section === section.name)}
+                rows={rows.filter((r) => r.sectionUid === section.uid)}
                 ingredientOptions={ingredientOptions}
                 onNameChange={updateSectionName}
                 onRemove={removeSection}
-                onAddRow={addRowToSection}
+                onAddRow={addRow}
                 onUpdateRow={updateRow}
                 onRemoveRow={removeRow}
               />
@@ -273,11 +211,13 @@ export function RecipeForm({ ingredientOptions, recipesForCopy, recipe, existing
               open={copyModalOpen}
               onOpenChange={setCopyModalOpen}
               recipes={recipesForCopy}
-              onCopy={handleCopySection}
+              onCopy={addCopiedSection}
             />
           </>
         )}
       </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="flex gap-2 pt-2">
         <Button type="button" variant="outline" onClick={() => router.push(recipe ? `/recipes/${recipe.id}` : '/recipes')} disabled={isPending}>

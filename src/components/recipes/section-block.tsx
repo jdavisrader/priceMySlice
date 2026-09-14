@@ -13,7 +13,7 @@ type Props = {
   ingredientOptions: IngredientOption[]
   onNameChange: (uid: string, newName: string) => void
   onRemove: (uid: string) => void
-  onAddRow: (sectionName: string) => void
+  onAddRow: (sectionUid: string) => void
   onUpdateRow: (rowUid: string, updated: RowData) => void
   onRemoveRow: (rowUid: string) => void
 }
@@ -63,7 +63,7 @@ export function SectionBlock({
         type="button"
         variant="outline"
         size="sm"
-        onClick={() => onAddRow(section.name)}
+        onClick={() => onAddRow(section.uid)}
       >
         <Plus className="h-4 w-4 mr-2" />
         Add ingredient

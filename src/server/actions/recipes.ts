@@ -2,7 +2,7 @@
 
 import { db } from '@/db'
 import { recipes, recipeIngredients } from '@/db/schema'
-import { eq, asc, isNotNull } from 'drizzle-orm'
+import { eq, asc } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
 export type RecipeForCopy = {
@@ -27,7 +27,6 @@ export async function getRecipesForCopy(excludeId?: number): Promise<RecipeForCo
     })
     .from(recipes)
     .innerJoin(recipeIngredients, eq(recipeIngredients.recipeId, recipes.id))
-    .where(isNotNull(recipeIngredients.section))
     .orderBy(asc(recipes.name), asc(recipeIngredients.sortOrder))
 
   const filtered = excludeId ? rows.filter((r) => r.recipeId !== excludeId) : rows
@@ -38,7 +37,7 @@ export async function getRecipesForCopy(excludeId?: number): Promise<RecipeForCo
       recipeMap.set(row.recipeId, { id: row.recipeId, name: row.recipeName, sections: [] })
     }
     const recipe = recipeMap.get(row.recipeId)!
-    const sectionName = row.section!
+    const sectionName = row.section
     let section = recipe.sections.find((s) => s.name === sectionName)
     if (!section) {
       section = { name: sectionName, ingredients: [] }
@@ -55,7 +54,7 @@ export type RecipeFullCopy = {
   description: string | null
   servings: number
   notes: string | null
-  ingredients: { ingredientId: number; quantity: string; unit: string; section: string | null; sortOrder: number }[]
+  ingredients: { ingredientId: number; quantity: string; unit: string; section: string; sortOrder: number }[]
 }
 
 export async function getRecipeFullCopy(id: number): Promise<RecipeFullCopy | null> {
@@ -87,7 +86,7 @@ type RecipeIngredientInput = {
   ingredientId: number
   quantity: number
   unit: string
-  section: string | null
+  section: string
   sortOrder: number
 }
 
@@ -117,7 +116,7 @@ export async function createRecipe(data: RecipeInput): Promise<number> {
         ingredientId: i.ingredientId,
         quantity: i.quantity.toString(),
         unit: i.unit,
-        section: i.section ?? null,
+        section: i.section,
         sortOrder: i.sortOrder,
       }))
     )
@@ -148,7 +147,7 @@ export async function updateRecipe(id: number, data: RecipeInput): Promise<void>
         ingredientId: i.ingredientId,
         quantity: i.quantity.toString(),
         unit: i.unit,
-        section: i.section ?? null,
+        section: i.section,
         sortOrder: i.sortOrder,
       }))
     )
