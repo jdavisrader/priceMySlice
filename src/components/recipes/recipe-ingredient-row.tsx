@@ -51,12 +51,12 @@ export function RecipeIngredientRow({ row, ingredientOptions, onChange, onRemove
   return (
     <div className="flex items-center gap-2">
       <Select value={row.ingredientId} onValueChange={handleIngredientChange}>
-        <SelectTrigger className="flex-1">
-          <SelectValue placeholder="Select ingredient…">{selected?.name}</SelectValue>
+        <SelectTrigger className="flex-1 min-w-0">
+          <SelectValue className="min-w-0" placeholder="Select ingredient…">{selected?.name}</SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent align="start" alignItemWithTrigger={false}>
           {ingredientOptions.map((i) => (
-            <SelectItem key={i.id} value={i.id.toString()}>
+            <SelectItem key={i.id} value={i.id.toString()} title={i.name}>
               {i.name}
             </SelectItem>
           ))}
@@ -78,7 +78,7 @@ export function RecipeIngredientRow({ row, ingredientOptions, onChange, onRemove
         <SelectTrigger className="w-36">
           <SelectValue placeholder="Unit" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent align="start" alignItemWithTrigger={false}>
           {compatibleUnits.map((u) => (
             <SelectItem key={u.value} value={u.value}>
               {u.label}

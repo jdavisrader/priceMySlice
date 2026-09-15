@@ -125,10 +125,10 @@ export function CakeCalculator({ recipeOptions, defaultSalesTaxRate }: { recipeO
         <div className="space-y-1.5">
           <Label>Recipe</Label>
           <Select value={recipeId} onValueChange={handleRecipeChange}>
-            <SelectTrigger><SelectValue placeholder="Select a recipe…">{recipe?.name}</SelectValue></SelectTrigger>
-            <SelectContent>
+            <SelectTrigger className="w-full min-w-0"><SelectValue className="min-w-0" placeholder="Select a recipe…">{recipe?.name}</SelectValue></SelectTrigger>
+            <SelectContent align="start" alignItemWithTrigger={false}>
               {recipeOptions.map((r) => (
-                <SelectItem key={r.id} value={r.id.toString()}>{r.name}</SelectItem>
+                <SelectItem key={r.id} value={r.id.toString()} title={r.name}>{r.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>

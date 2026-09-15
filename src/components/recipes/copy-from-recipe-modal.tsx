@@ -56,18 +56,18 @@ export function CopyFromRecipeModal({ open, onOpenChange, recipes, onCopy }: Pro
           <DialogTitle>Copy section from recipe</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="space-y-4 py-2 min-w-0">
           <div className="space-y-1.5">
             <p className="text-sm font-medium">Recipe</p>
             <Select value={selectedRecipeId} onValueChange={(v) => handleRecipeChange(v ?? '')}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a recipe…">
+              <SelectTrigger className="w-full min-w-0">
+                <SelectValue className="min-w-0" placeholder="Select a recipe…">
                   {selectedRecipe?.name ?? null}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent align="start" alignItemWithTrigger={false}>
                 {recipes.map((r) => (
-                  <SelectItem key={r.id} value={r.id.toString()}>
+                  <SelectItem key={r.id} value={r.id.toString()} title={r.name}>
                     {r.name}
                   </SelectItem>
                 ))}
@@ -90,7 +90,7 @@ export function CopyFromRecipeModal({ open, onOpenChange, recipes, onCopy }: Pro
                         : 'border-border hover:bg-muted'
                     }`}
                   >
-                    <div className="font-medium">{s.name}</div>
+                    <div className="font-medium truncate" title={s.name}>{s.name}</div>
                     <div className="text-xs text-muted-foreground">
                       {s.ingredients.length} ingredient{s.ingredients.length !== 1 ? 's' : ''}
                     </div>
