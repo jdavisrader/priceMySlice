@@ -38,22 +38,26 @@ export function IngredientCostTable({ lineItems, ingredientTotal, salesTaxAmount
   }
 
   return (
-    <div className="divide-y rounded-md border bg-white text-sm">
-      {unsectioned.map((item, i) => renderRow(item, `u-${i}`))}
-      {unsectioned.length > 0 && sectionNames.length > 0 && (
-        <div className="flex justify-between px-3 py-1.5 text-xs text-muted-foreground bg-zinc-50/60">
-          <span>Subtotal</span>
-          <span className="tabular-nums">
-            ${unsectioned
-              .filter((i) => !i.conversionError)
-              .reduce((sum, i) => sum + i.lineTotal, 0)
-              .toFixed(2)}
-          </span>
+    <div className="space-y-3 text-sm">
+      {unsectioned.length > 0 && (
+        <div className="divide-y rounded-md border bg-white overflow-hidden">
+          {unsectioned.map((item, i) => renderRow(item, `u-${i}`))}
+          {sectionNames.length > 0 && (
+            <div className="flex justify-between px-3 py-1.5 text-xs text-muted-foreground bg-zinc-50/60">
+              <span>Subtotal</span>
+              <span className="tabular-nums">
+                ${unsectioned
+                  .filter((i) => !i.conversionError)
+                  .reduce((sum, i) => sum + i.lineTotal, 0)
+                  .toFixed(2)}
+              </span>
+            </div>
+          )}
         </div>
       )}
       {sectionNames.map((sectionName) => (
-        <div key={sectionName}>
-          <div className="flex items-center justify-between px-3 py-2 bg-zinc-100 border-b">
+        <div key={sectionName} className="divide-y rounded-md border bg-white overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 bg-zinc-100">
             <span className="text-sm font-semibold text-foreground">{sectionName}</span>
             {onSectionScaleChange && (
               <div className="flex items-center gap-1">
@@ -73,7 +77,7 @@ export function IngredientCostTable({ lineItems, ingredientTotal, salesTaxAmount
           {lineItems.filter((i) => i.section === sectionName).map((item, i) =>
             renderRow(item, `${sectionName}-${i}`)
           )}
-          <div className="flex justify-between px-3 py-1.5 text-xs text-muted-foreground bg-zinc-50/60 border-t">
+          <div className="flex justify-between px-3 py-1.5 text-xs text-muted-foreground bg-zinc-50/60">
             <span>{sectionName} total</span>
             <span className="tabular-nums">
               ${lineItems
@@ -84,16 +88,18 @@ export function IngredientCostTable({ lineItems, ingredientTotal, salesTaxAmount
           </div>
         </div>
       ))}
-      <div className="flex justify-between px-3 py-2 font-medium bg-zinc-50">
-        <span>Ingredient total</span>
-        <span>${ingredientTotal.toFixed(2)}</span>
-      </div>
-      {salesTaxAmount !== undefined && salesTaxPct !== undefined && salesTaxPct > 0 && (
-        <div className="flex justify-between px-3 py-2 text-muted-foreground bg-zinc-50">
-          <span>Sales tax ({salesTaxPct.toFixed(2)}%)</span>
-          <span>${salesTaxAmount.toFixed(2)}</span>
+      <div className="divide-y rounded-md border bg-white overflow-hidden">
+        <div className="flex justify-between px-3 py-2 font-medium bg-zinc-50">
+          <span>Ingredient total</span>
+          <span>${ingredientTotal.toFixed(2)}</span>
         </div>
-      )}
+        {salesTaxAmount !== undefined && salesTaxPct !== undefined && salesTaxPct > 0 && (
+          <div className="flex justify-between px-3 py-2 text-muted-foreground bg-zinc-50">
+            <span>Sales tax ({salesTaxPct.toFixed(2)}%)</span>
+            <span>${salesTaxAmount.toFixed(2)}</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
