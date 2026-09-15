@@ -60,14 +60,14 @@ export function CopyFromRecipeModal({ open, onOpenChange, recipes, onCopy }: Pro
           <div className="space-y-1.5">
             <p className="text-sm font-medium">Recipe</p>
             <Select value={selectedRecipeId} onValueChange={(v) => handleRecipeChange(v ?? '')}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a recipe…">
                   {selectedRecipe?.name ?? null}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent align="start" alignItemWithTrigger={false}>
                 {recipes.map((r) => (
-                  <SelectItem key={r.id} value={r.id.toString()}>
+                  <SelectItem key={r.id} value={r.id.toString()} title={r.name}>
                     {r.name}
                   </SelectItem>
                 ))}
